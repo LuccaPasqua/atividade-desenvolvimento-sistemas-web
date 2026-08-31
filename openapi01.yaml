@@ -1,0 +1,885 @@
+openapi: 3.0.4
+info:
+  title: DDA Metalúrgica - API de Controle de Estoque de Pastilhas
+  description: |-
+    API REST para automatizar o controle de estoque de pastilhas industriais da DDA Metalúrgica:
+    cadastro de pastilhas, fabricantes e fornecedores, registro de entradas e saídas, consulta de
+    saldo em tempo real, alertas de estoque mínimo e relatórios de consumo e reposição.
+  contact:
+    email: lucca_pasqua@estudante.sesisenai.org.br
+  version: 1.0.0
+servers:
+  - description: Ambiente de produção
+    url: https://ddametalurgica.com.br/api/v1
+
+tags:
+  - name: auth
+    description: Autenticação e sessão de usuários
+  - name: manufacturer
+    description: Fabricantes das pastilhas
+  - name: supplier
+    description: Fornecedores de onde as pastilhas são compradas
+  - name: product
+    description: Catálogo de tipos de pastilhas
+  - name: stock-movement
+    description: Registro de entradas e saídas de estoque
+  - name: stock
+    description: Consulta de saldo atual em tempo real
+  - name: alert
+    description: Alertas de estoque mínimo
+  - name: dashboard
+    description: Painel de acompanhamento do estoque
+  - name: report
+    description: Relatórios de consumo, movimentação e reposição
+
+paths:
+  # ----------------- AUTH
+  /auth/signup:
+    post:
+      tags: [auth]
+      summary: Cria um novo usuário no sistema.
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Usuário criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: E-mail já cadastrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Autentica um usuário e retorna um token de acesso.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login bem-sucedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciais inválidas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---------- MANUFACTURER
+  /manufacturer:
+    get:
+      tags: [manufacturer]
+      summary: Lista todos os fabricantes.
+      operationId: listManufacturers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de fabricantes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Manufacturer'
+      security: [{ bearerAuth: [] }]
+    post:
+      tags: [manufacturer]
+      summary: Cadastra um novo fabricante.
+      operationId: createManufacturer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerInput'
+      responses:
+        '201':
+          description: Fabricante criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+      security: [{ bearerAuth: [] }]
+
+  /manufacturer/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [manufacturer]
+      summary: Busca um fabricante específico.
+      operationId: getManufacturerById
+      responses:
+        '200':
+          description: Fabricante encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        '404':
+          description: Fabricante não encontrado.
+      security: [{ bearerAuth: [] }]
+    put:
+      tags: [manufacturer]
+      summary: Edita as informações de um fabricante.
+      operationId: updateManufacturer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerInput'
+      responses:
+        '200':
+          description: Fabricante atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        '404':
+          description: Fabricante não encontrado.
+      security: [{ bearerAuth: [] }]
+    delete:
+      tags: [manufacturer]
+      summary: Remove um fabricante.
+      operationId: deleteManufacturer
+      responses:
+        '204':
+          description: Fabricante removido.
+        '409':
+          description: Fabricante possui pastilhas vinculadas e não pode ser removido.
+      security: [{ bearerAuth: [] }]
+
+  # -------------- SUPPLIER
+  /supplier:
+    get:
+      tags: [supplier]
+      summary: Lista todos os fornecedores.
+      operationId: listSuppliers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de fornecedores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Supplier'
+      security: [{ bearerAuth: [] }]
+    post:
+      tags: [supplier]
+      summary: Cadastra um novo fornecedor.
+      operationId: createSupplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierInput'
+      responses:
+        '201':
+          description: Fornecedor criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+      security: [{ bearerAuth: [] }]
+
+  /supplier/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [supplier]
+      summary: Busca um fornecedor específico.
+      operationId: getSupplierById
+      responses:
+        '200':
+          description: Fornecedor encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Fornecedor não encontrado.
+      security: [{ bearerAuth: [] }]
+    put:
+      tags: [supplier]
+      summary: Edita as informações de um fornecedor.
+      operationId: updateSupplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierInput'
+      responses:
+        '200':
+          description: Fornecedor atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Fornecedor não encontrado.
+      security: [{ bearerAuth: [] }]
+    delete:
+      tags: [supplier]
+      summary: Remove um fornecedor.
+      operationId: deleteSupplier
+      responses:
+        '204':
+          description: Fornecedor removido.
+        '409':
+          description: Fornecedor possui movimentações vinculadas e não pode ser removido.
+      security: [{ bearerAuth: [] }]
+
+  # ----------------- PRODUCT
+  /product:
+    get:
+      tags: [product]
+      summary: Lista todos os tipos de pastilhas cadastrados.
+      description: Use o parâmetro q para buscar por código ou descrição.
+      operationId: listProducts
+      parameters:
+        - name: q
+          in: query
+          description: Busca livre por código ou descrição da pastilha.
+          required: false
+          schema:
+            type: string
+        - name: below_minimum
+          in: query
+          description: Se true, retorna apenas produtos com saldo abaixo do estoque mínimo.
+          required: false
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de pastilhas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+      security: [{ bearerAuth: [] }]
+    post:
+      tags: [product]
+      summary: Cadastra um novo tipo de pastilha.
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Pastilha criada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+      security: [{ bearerAuth: [] }]
+
+  /product/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [product]
+      summary: Busca uma pastilha específica.
+      operationId: getProductById
+      responses:
+        '200':
+          description: Pastilha encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Pastilha não encontrada.
+      security: [{ bearerAuth: [] }]
+    put:
+      tags: [product]
+      summary: Edita as informações de uma pastilha, incluindo o estoque mínimo.
+      operationId: updateProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Pastilha atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Pastilha não encontrada.
+      security: [{ bearerAuth: [] }]
+    delete:
+      tags: [product]
+      summary: Remove um tipo de pastilha.
+      operationId: deleteProduct
+      responses:
+        '204':
+          description: Pastilha removida.
+        '409':
+          description: Pastilha possui movimentações vinculadas e não pode ser removida.
+      security: [{ bearerAuth: [] }]
+
+  # --------------- STOCK
+  /product/{id}/stock:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [stock]
+      summary: Consulta o saldo atual em tempo real de uma pastilha.
+      operationId: getProductStock
+      responses:
+        '200':
+          description: Saldo atual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockBalance'
+        '404':
+          description: Pastilha não encontrada.
+      security: [{ bearerAuth: [] }]
+
+  # ---------------------- STOCK MOVEMENT
+  /stock-movement:
+    get:
+      tags: [stock-movement]
+      summary: Lista o histórico de movimentações de estoque.
+      operationId: listStockMovements
+      parameters:
+        - name: product_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/StockMovementType'
+        - name: from
+          in: query
+          description: Data inicial (ISO 8601).
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Data final (ISO 8601).
+          required: false
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de movimentações.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovement'
+      security: [{ bearerAuth: [] }]
+    post:
+      tags: [stock-movement]
+      summary: Registra uma nova movimentação de estoque (entrada, saída ou ajuste).
+      description: |-
+        Operação somente-inserção (insert-only): o histórico de movimentações nunca é editado ou
+        removido. O saldo do produto é recalculado automaticamente a cada movimentação registrada,
+        e um alerta é gerado caso o saldo resultante fique abaixo do estoque mínimo configurado.
+      operationId: createStockMovement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementInput'
+      responses:
+        '201':
+          description: Movimentação registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+        '404':
+          description: Pastilha ou fornecedor não encontrado.
+        '409':
+          description: Saldo insuficiente para registrar uma saída.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security: [{ bearerAuth: [] }]
+
+  /stock-movement/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [stock-movement]
+      summary: Busca uma movimentação específica.
+      operationId: getStockMovementById
+      responses:
+        '200':
+          description: Movimentação encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+        '404':
+          description: Movimentação não encontrada.
+      security: [{ bearerAuth: [] }]
+
+  # ------------ ALERT
+  /alert:
+    get:
+      tags: [alert]
+      summary: Lista os alertas de estoque mínimo.
+      operationId: listAlerts
+      parameters:
+        - name: resolved
+          in: query
+          description: Filtra por alertas já resolvidos ou ainda ativos.
+          required: false
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de alertas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+      security: [{ bearerAuth: [] }]
+
+  /alert/{id}/resolve:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    patch:
+      tags: [alert]
+      summary: Marca um alerta como resolvido (ex. após reposição de estoque).
+      operationId: resolveAlert
+      responses:
+        '200':
+          description: Alerta marcado como resolvido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Alerta não encontrado.
+      security: [{ bearerAuth: [] }]
+
+  # ------------------ DASHBOARD
+  /dashboard/summary:
+    get:
+      tags: [dashboard]
+      summary: Retorna um resumo geral da situação do estoque.
+      operationId: getDashboardSummary
+      responses:
+        '200':
+          description: Resumo do painel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+      security: [{ bearerAuth: [] }]
+
+  # -------------------- REPORT
+  /report/consumption:
+    get:
+      tags: [report]
+      summary: Relatório de consumo (saídas) de pastilhas em um período.
+      operationId: getConsumptionReport
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Relatório de consumo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsumptionReportItem'
+      security: [{ bearerAuth: [] }]
+
+  /report/replenishment:
+    get:
+      tags: [report]
+      summary: Relatório de necessidade de reposição (itens abaixo do estoque mínimo).
+      operationId: getReplenishmentReport
+      responses:
+        '200':
+          description: Relatório de reposição.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReplenishmentReportItem'
+      security: [{ bearerAuth: [] }]
+
+components:
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      description: Identificador único do recurso.
+      schema:
+        type: string
+        format: uuid
+    PageParam:
+      name: page
+      in: query
+      required: false
+      description: Número da página, começando em 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      description: Quantidade de itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    # -------------------- AUTH
+    SignupRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          example: operador
+        created_at:
+          type: string
+          format: date-time
+
+    # ---------------- MANUFACTURER
+    ManufacturerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Sandvik Coromant
+        document:
+          type: string
+        contact:
+          type: string
+    Manufacturer:
+      allOf:
+        - $ref: '#/components/schemas/ManufacturerInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+
+    # --------------- SUPPLIER
+    SupplierInput:
+      type: object
+      required: [name, document]
+      properties:
+        name:
+          type: string
+        document:
+          type: string
+          description: CNPJ do fornecedor.
+        contact:
+          type: string
+    Supplier:
+      allOf:
+        - $ref: '#/components/schemas/SupplierInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+
+    # ------------ PRODUCT
+    ProductInput:
+      type: object
+      required: [code, description, unit_of_measure, min_stock_level]
+      properties:
+        code:
+          type: string
+          example: PST-CNMG120408
+        description:
+          type: string
+          example: Pastilha CNMG 12 04 08 classe P25
+        manufacturer_id:
+          type: string
+          format: uuid
+        unit_of_measure:
+          type: string
+          example: un
+        unit_cost:
+          type: number
+          format: decimal
+        min_stock_level:
+          type: integer
+          minimum: 0
+          description: Quantidade mínima antes de disparar um alerta de reposição.
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+
+    # ------ STOCK
+    StockBalance:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        current_quantity:
+          type: number
+          format: decimal
+        min_stock_level:
+          type: integer
+        below_minimum:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+
+    # ------------ STOCK MOVEMENT
+    StockMovementType:
+      type: string
+      enum: [ENTRADA, SAIDA, AJUSTE]
+
+    StockMovementInput:
+      type: object
+      required: [product_id, type, quantity]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/StockMovementType'
+        quantity:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Sempre um valor positivo - o campo type define se soma ou subtrai do saldo.
+        supplier_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Obrigatório apenas para movimentações do tipo ENTRADA.
+        reason:
+          type: string
+          example: Compra - NF 12345
+    StockMovement:
+      allOf:
+        - $ref: '#/components/schemas/StockMovementInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            user_id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+
+    # -------------------------------------------------------------- ALERT
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        quantity_at_trigger:
+          type: number
+          format: decimal
+        min_stock_level_at_trigger:
+          type: integer
+        resolved:
+          type: boolean
+        triggered_at:
+          type: string
+          format: date-time
+
+    # ----------------------------------------------------------- DASHBOARD
+    DashboardSummary:
+      type: object
+      properties:
+        total_products:
+          type: integer
+        products_below_minimum:
+          type: integer
+        active_alerts:
+          type: integer
+        movements_today:
+          type: integer
+
+    # -------------------------------------------------------------- REPORT
+    ConsumptionReportItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        product_code:
+          type: string
+        total_consumed:
+          type: number
+          format: decimal
+
+    ReplenishmentReportItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        product_code:
+          type: string
+        current_quantity:
+          type: number
+          format: decimal
+        min_stock_level:
+          type: integer
+        suggested_purchase_quantity:
+          type: number
+          format: decimal
+
+security:
+  - bearerAuth: []
