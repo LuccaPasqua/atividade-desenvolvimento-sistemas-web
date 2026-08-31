@@ -1,0 +1,136 @@
+User --- user
+user_id - String
+user_name - String
+user_role - Stirng
+user_birthday - Date
+user_created_at - Date
+
+
+
+Supplier --- supplier
+supplier_id - String
+supplier_name - String
+supplier_location - String
+suplier_created_at - Date
+
+
+Supply --- supply
+supply_id - String
+supply_code - String
+supply_name - String
+supply_created_at - Date
+supply_price_paid - Double
+supply_unit - String
+supply_quantity - Double
+
+
+Batch -- batch
+batch_id - String
+batch_code - String
+supplier_id - String
+supply_id - String
+batch_created_at - Date
+batch_fabricated_at - Date
+batch_expiration_date - Date
+
+
+Movements -- movement
+movement_id - String
+supply_id - String
+batch_id - String
+movement_type - STRING [INPUT, OUTPUT, ADJUST]
+movement_quantity - Double
+
+
+
+Client
+
+
+
+Machine
+
+Order
+
+Piece
+
+Inspection
+
+/auth ----------------------------------------------
+POST /signup - User sign-up
+POST /login - User login
+
+/supplier
+----------------------------------------------------
+GET - list all suppliers
+GET  /{id} - Get a specific supplier
+POST - Create a new supplier
+PUT - Edit a supplier informations
+DELETE /{id} - Delete a supplier
+
+
+/supplie --------------------------------------------
+
+GET - list all supplies
+GET /{id} - Get a specifi supply 
+POST - Create a new supply 
+PUT /{id} - Edit a supply informations
+DELETE /{id} - Delete a supply 
+
+
+/member ----------------------------------------------
+GET - list all members
+GET /{id} - Get a specific member
+POST - Create new member
+PUT /{id} - Edit a member informations
+DELETE /{id} - Delete a memner
+
+
+/notification ----------------------------------------
+GET - list all notifications for the auth user
+GET /{id} - list a specific notification for the auth user
+
+
+/client ----------------------------------------------
+GET - List all clients
+GET /{id} - Get a specific client
+POST - Create a new client
+PUT /{id} - Edit a client informations
+DELETE /{id} - Delete a specific client
+
+
+/machine ---------------------------------------------
+GET - List all the machines
+GET /{id} - Get a specific client
+POST - Create a new machine
+PUT /{id} - Edit a machine informations
+DELETE /{id} - Delete a specific machine
+
+
+/order -----------------------------------------------
+GET - List all orders
+GET /{id} - Get a specific order
+GET /{client_id} - List orders by client
+POST - Create a order
+PUT /{id} - Edit a order
+
+
+/piece -----------------------------------------------
+GET - List all pieces
+GET /{id} - Get a specific piece
+GET /{batch_id}
+POST - Create a piece
+PUT /{id} - Edit a piece
+
+
+/batch -----------------------------------------------
+GET - List all batches
+GET /{id} - List a specific batch
+POST - Create a batch
+PUT /{id} - Edit a batch
+
+
+/inspection ------------------------------------------
+GET - List all inspections
+GET /{id} - Get a specific inspection
+POST - Create a inspection
+PUT /{id} - Edit a inspection
